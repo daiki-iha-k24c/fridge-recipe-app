@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import RecipeCard from "../components/RecipeCard";
 import RecipeDetail from "../components/RecipeDetail";
 import "../styles/card.css";
 
@@ -95,35 +94,35 @@ export default function RecipePage() {
   }
 
 
-  async function handleSelect(candidate: Candidate) {
-    setSelectedCandidate(candidate);
-    setRecipe(null);
-    setDetailError(null);
-    setLoadingDetail(true);
+  // async function handleSelect(candidate: Candidate) {
+  //   setSelectedCandidate(candidate);
+  //   setRecipe(null);
+  //   setDetailError(null);
+  //   setLoadingDetail(true);
 
-    try {
-      const r = await fetch("/api/recipes/detail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seed: candidate.seed,
-          fridge, // 冷蔵庫の中身も渡す（精度UP）
-        }),
-      });
+  //   try {
+  //     const r = await fetch("/api/recipes/detail", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         seed: candidate.seed,
+  //         fridge, // 冷蔵庫の中身も渡す（精度UP）
+  //       }),
+  //     });
 
-      if (!r.ok) {
-        throw new Error(await r.text());
-      }
+  //     if (!r.ok) {
+  //       throw new Error(await r.text());
+  //     }
 
-      const data = await r.json();
-      setRecipe(data);
-    } catch (e) {
-      console.error(e);
-      setDetailError("詳細レシピの生成に失敗しました");
-    } finally {
-      setLoadingDetail(false);
-    }
-  }
+  //     const data = await r.json();
+  //     setRecipe(data);
+  //   } catch (e) {
+  //     console.error(e);
+  //     setDetailError("詳細レシピの生成に失敗しました");
+  //   } finally {
+  //     setLoadingDetail(false);
+  //   }
+  // }
 
 
 
@@ -133,7 +132,7 @@ export default function RecipePage() {
   }
 
   // 候補の絞り込み検索（必要なら残す。今は冷蔵庫UIが主なのでオフでもOK）
-  const filteredCandidates = useMemo(() => candidates, [candidates]);
+  // const filteredCandidates = useMemo(() => candidates, [candidates]);
 
   return (
     <div className="page">
