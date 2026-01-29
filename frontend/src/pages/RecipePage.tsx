@@ -156,6 +156,9 @@ export default function RecipePage() {
 
   return (
     <div className="page">
+      <div style={{ padding: 8, fontSize: 12, color: "red" }}>
+      DEBUG: RecipePage candidates={candidates.length}
+    </div>
       {!selectedCandidate ? (
         <>
           {/* ✅ 冷蔵庫UI */}
