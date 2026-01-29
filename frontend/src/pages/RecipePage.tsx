@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import RecipeDetail from "../components/RecipeDetail";
 import "../styles/card.css";
 
@@ -28,8 +28,8 @@ export default function RecipePage() {
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
 
-  const [loadingDetail, setLoadingDetail] = useState(false);
-  const [detailError, setDetailError] = useState<string | null>(null);
+  const [loadingDetail] = useState(false);
+  const [detailError] = useState<string | null>(null);
 
   // ✅ 冷蔵庫（追加式）
   const [ingredientInput, setIngredientInput] = useState("");
