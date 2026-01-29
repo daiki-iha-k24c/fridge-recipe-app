@@ -191,12 +191,12 @@ export default function RecipePage() {
             )}
           </div>
 
-          {/* ✅ 候補一覧 */}
+          {/* ✅ 候補一覧
           <div className="grid">
             {filteredCandidates.map((c) => (
               <RecipeCard key={c.id} candidate={c} onSelect={handleSelect} />
             ))}
-          </div>
+          </div> */}
         </>
       ) : (
         <>
