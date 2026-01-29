@@ -78,13 +78,10 @@ export default function RecipePage() {
   }
 
   function clearFridge() {
-  setFridge([]);
-  setIngredientInput("");
-  setCandidates([]);            // ← 追加：候補もリセット
-  setSelectedCandidate(null);   // 任意
-  setRecipe(null);              // 任意
-}
-
+    setFridge([]);
+    setIngredientInput("");
+    setCandidates([]); 
+  }
 
   async function suggestRecipes() {
     if (fridge.length === 0) {
