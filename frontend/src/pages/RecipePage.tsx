@@ -1,6 +1,7 @@
 import { useState } from "react";
 import RecipeDetail from "../components/RecipeDetail";
 import "../styles/card.css";
+import RecipeCard from "../components/RecipeCard";
 
 
 
@@ -192,12 +193,18 @@ export default function RecipePage() {
             )}
           </div>
 
-          {/* ✅ 候補一覧
-          <div className="grid">
-            {filteredCandidates.map((c) => (
-              <RecipeCard key={c.id} candidate={c} onSelect={handleSelect} />
-            ))}
-          </div> */}
+          {candidates.length > 0 && (
+  <div className="grid">
+    {candidates.map((c) => (
+      <RecipeCard
+        key={c.id}
+        candidate={c}
+        onSelect={() => {}}
+      />
+    ))}
+  </div>
+)}
+
         </>
       ) : (
         <>
