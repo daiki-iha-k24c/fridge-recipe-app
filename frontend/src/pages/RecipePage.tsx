@@ -39,7 +39,7 @@ export default function RecipePage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
-  
+
 
   // 追加（Enterでも追加できるようにする）
   function addIngredient() {
@@ -51,6 +51,7 @@ export default function RecipePage() {
     }
     setFridge([...fridge, v]);
     setIngredientInput("");
+    setSuggestError(null);
   }
 
   function removeIngredient(name: string) {
@@ -60,7 +61,8 @@ export default function RecipePage() {
   function clearFridge() {
     setFridge([]);
     setIngredientInput("");
-    setCandidates([]); 
+    setCandidates([]);
+    setSuggestError(null);
   }
 
   async function suggestRecipes() {
@@ -85,9 +87,9 @@ export default function RecipePage() {
 
       const data = await r.json();
       setCandidates(data.candidates);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      setSuggestError("候補の作成に失敗しました");
+      setSuggestError(e?.message ?? "候補の作成に失敗しました");
     } finally {
       setLoadingSuggest(false);
     }
@@ -136,6 +138,8 @@ export default function RecipePage() {
 
   return (
     <div className="page">
+
+
       {!selectedCandidate ? (
         <>
           {/* ✅ 冷蔵庫UI */}
@@ -150,7 +154,9 @@ export default function RecipePage() {
             />
             <button onClick={addIngredient}>追加</button>
             <button onClick={clearFridge}>全クリア</button>
-            <button onClick={suggestRecipes}>レシピ提案</button>
+            <button onClick={suggestRecipes} disabled={fridge.length === 0 || loadingSuggest}>
+              レシピ提案
+            </button>
           </div>
 
           {suggestError && (
