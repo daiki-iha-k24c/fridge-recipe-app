@@ -56,9 +56,10 @@ export default function RecipePage() {
   const [fridge, setFridge] = useState<string[]>([]);
 
   // ✅ 候補・詳細（今はモック）
-  const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
+  
 
   // 追加（Enterでも追加できるようにする）
   function addIngredient() {
@@ -77,9 +78,13 @@ export default function RecipePage() {
   }
 
   function clearFridge() {
-    setFridge([]);
-    setIngredientInput("");
-  }
+  setFridge([]);
+  setIngredientInput("");
+  setCandidates([]);            // ← 追加：候補もリセット
+  setSelectedCandidate(null);   // 任意
+  setRecipe(null);              // 任意
+}
+
 
   async function suggestRecipes() {
     if (fridge.length === 0) {
