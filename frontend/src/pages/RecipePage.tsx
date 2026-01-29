@@ -22,26 +22,26 @@ type Recipe = {
   tips?: string[];
 };
 
-const MOCK_CANDIDATES: Candidate[] = [
-  {
-    id: "c1",
-    title: "キャベツと卵のふわとろ炒め",
-    oneLine: "冷蔵庫の定番でさっと作る、やさしい味の一皿。",
-    timeMin: 10,
-    difficulty: 1,
-    mainIngredients: ["キャベツ", "卵", "醤油"],
-    seed: "キャベツ×卵のふわとろ炒め、10分、フライパン",
-  },
-  {
-    id: "c2",
-    title: "鶏むねの味噌バター焼き",
-    oneLine: "コクうま。ごはんが進む時短メイン。",
-    timeMin: 15,
-    difficulty: 2,
-    mainIngredients: ["鶏むね", "味噌", "バター"],
-    seed: "鶏むね×味噌バター焼き、15分、フライパン",
-  },
-];
+// const MOCK_CANDIDATES: Candidate[] = [
+//   {
+//     id: "c1",
+//     title: "キャベツと卵のふわとろ炒め",
+//     oneLine: "冷蔵庫の定番でさっと作る、やさしい味の一皿。",
+//     timeMin: 10,
+//     difficulty: 1,
+//     mainIngredients: ["キャベツ", "卵", "醤油"],
+//     seed: "キャベツ×卵のふわとろ炒め、10分、フライパン",
+//   },
+//   {
+//     id: "c2",
+//     title: "鶏むねの味噌バター焼き",
+//     oneLine: "コクうま。ごはんが進む時短メイン。",
+//     timeMin: 15,
+//     difficulty: 2,
+//     mainIngredients: ["鶏むね", "味噌", "バター"],
+//     seed: "鶏むね×味噌バター焼き、15分、フライパン",
+//   },
+// ];
 
 export default function RecipePage() {
 
