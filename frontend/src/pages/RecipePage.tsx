@@ -136,10 +136,6 @@ export default function RecipePage() {
 
   return (
     <div className="page">
-      <div style={{ color: "red", fontSize: 12, padding: 8 }}>
-  BUILD: 2026-01-29 candidates={candidates.length}
-</div>
-
       {!selectedCandidate ? (
         <>
           {/* ✅ 冷蔵庫UI */}
