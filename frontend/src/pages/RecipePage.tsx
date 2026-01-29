@@ -22,15 +22,13 @@ type Recipe = {
   tips?: string[];
 };
 
-;
-
 export default function RecipePage() {
 
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
 
-  const [loadingDetail] = useState(false);
-  const [detailError] = useState<string | null>(null);
+const [loadingDetail, setLoadingDetail] = useState(false);
+const [detailError, setDetailError] = useState<string | null>(null);
 
   // ✅ 冷蔵庫（追加式）
   const [ingredientInput, setIngredientInput] = useState("");
@@ -97,35 +95,35 @@ export default function RecipePage() {
   }
 
 
-  // async function handleSelect(candidate: Candidate) {
-  //   setSelectedCandidate(candidate);
-  //   setRecipe(null);
-  //   setDetailError(null);
-  //   setLoadingDetail(true);
+  async function handleSelect(candidate: Candidate) {
+    setSelectedCandidate(candidate);
+    setRecipe(null);
+    setDetailError(null);
+    setLoadingDetail(true);
 
-  //   try {
-  //     const r = await fetch("/api/recipes/detail", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({
-  //         seed: candidate.seed,
-  //         fridge, // 冷蔵庫の中身も渡す（精度UP）
-  //       }),
-  //     });
+    try {
+      const r = await fetch("/api/recipes/detail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seed: candidate.seed,
+          fridge, // 冷蔵庫の中身も渡す（精度UP）
+        }),
+      });
 
-  //     if (!r.ok) {
-  //       throw new Error(await r.text());
-  //     }
+      if (!r.ok) {
+        throw new Error(await r.text());
+      }
 
-  //     const data = await r.json();
-  //     setRecipe(data);
-  //   } catch (e) {
-  //     console.error(e);
-  //     setDetailError("詳細レシピの生成に失敗しました");
-  //   } finally {
-  //     setLoadingDetail(false);
-  //   }
-  // }
+      const data = await r.json();
+      setRecipe(data);
+    } catch (e) {
+      console.error(e);
+      setDetailError("詳細レシピの生成に失敗しました");
+    } finally {
+      setLoadingDetail(false);
+    }
+  }
 
 
 
@@ -193,17 +191,62 @@ export default function RecipePage() {
             )}
           </div>
 
-          {candidates.length > 0 && (
+          {/* ✅ 空状態（材料なし） */}
+          {fridge.length === 0 && !loadingSuggest && (
+            <div
+              className="card"
+              style={{
+                width: "100%",
+                padding: 28,
+                border: "1px dashed #ddd",
+                textAlign: "center",
+                marginBottom: 16,
+              }}
+            >
+              <div className="card-title" style={{ marginBottom: 8 }}>
+                まだ材料がありません 🧊
+              </div>
+              <div className="card-text" style={{ marginBottom: 16 }}>
+                上の入力欄から材料を追加して、「レシピ提案」を押してみてね。
+              </div>
+
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                <button
+                  onClick={() => {
+                    setIngredientInput("卵");
+                  }}
+                  style={{ padding: "10px 14px" }}
+                >
+                  例：卵
+                </button>
+                <button
+                  onClick={() => {
+                    setIngredientInput("キャベツ");
+                  }}
+                  style={{ padding: "10px 14px" }}
+                >
+                  例：キャベツ
+                </button>
+              </div>
+
+              <div style={{ marginTop: 12, fontSize: 12, color: "#777" }}>
+                ※ 追加は Enter キーでもできます
+              </div>
+            </div>
+          )}
+
+
+          {/* ✅ 候補一覧 */}
+{fridge.length > 0 && candidates.length > 0 && (
   <div className="grid">
     {candidates.map((c) => (
-      <RecipeCard
-        key={c.id}
-        candidate={c}
-        onSelect={() => {}}
-      />
+      <RecipeCard key={c.id} candidate={c} onSelect={handleSelect} />
     ))}
   </div>
 )}
+
+
+
 
         </>
       ) : (
