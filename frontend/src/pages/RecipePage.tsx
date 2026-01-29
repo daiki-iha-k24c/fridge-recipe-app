@@ -168,7 +168,7 @@ const [detailError, setDetailError] = useState<string | null>(null);
           {/* ✅ チップ表示 */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
             {fridge.length === 0 ? (
-              <span className="pill">まだ食材がありません（追加してね）</span>
+              <p></p>
             ) : (
               fridge.map((x) => (
                 <span key={x} className="pill" style={{ display: "inline-flex", gap: 8 }}>
