@@ -171,6 +171,13 @@ export default function RecipePage() {
             <button onClick={suggestRecipes}>レシピ提案</button>
           </div>
 
+          {suggestError && (
+            <div className="card" style={{ width: "100%", padding: 16, marginBottom: 16 }}>
+              <div className="card-text" style={{ color: "red" }}>{suggestError}</div>
+            </div>
+          )}
+
+
           {/* ✅ チップ表示 */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
             {fridge.length === 0 ? (
