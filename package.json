@@ -1,0 +1,17 @@
+{
+  "name": "fridge-recipe-app",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:server": "npm --prefix server run dev",
+
+    "dev": "concurrently -n frontend,server -c auto \"npm run dev:frontend\" \"npm run dev:server\"",
+
+    "install:all": "npm --prefix frontend install && npm --prefix server install",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix server run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
