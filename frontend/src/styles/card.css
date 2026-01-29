@@ -109,3 +109,8 @@
 .backlink:hover {
   color: #0090aa;
 }
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
