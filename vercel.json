@@ -1,6 +1,5 @@
 {
-  "installCommand": "npm install --no-audit --no-fund && npm --prefix frontend install --no-audit --no-fund",
-  "buildCommand": "npm --prefix frontend run build",
+  "buildCommand": "cd frontend && npm run build",
+  "installCommand": "cd frontend && npm install",
   "outputDirectory": "frontend/dist"
 }
-
