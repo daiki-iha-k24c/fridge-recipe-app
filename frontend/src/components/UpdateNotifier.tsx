@@ -1,14 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 type VersionFile = {
   version: string;
 };
 
+const STORAGE_KEY = "fridge_app_seen_version";
+
 async function fetchVersion(): Promise<string | null> {
   try {
-    const res = await fetch(`/version.json?t=${Date.now()}`, {
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `${import.meta.env.BASE_URL}version.json?t=${Date.now()}`,
+      { cache: "no-store" }
+    );
 
     if (!res.ok) return null;
 
@@ -21,44 +24,34 @@ async function fetchVersion(): Promise<string | null> {
 }
 
 export default function UpdateNotifier() {
-  const initialVersionRef = useRef<string | null>(null);
-  const [hasUpdate, setHasUpdate] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-
     const checkVersion = async () => {
-      const latestVersion = await fetchVersion();
-      if (!latestVersion || !mounted) return;
+      const currentVersion = await fetchVersion();
+      if (!currentVersion) return;
 
-      if (initialVersionRef.current === null) {
-        initialVersionRef.current = latestVersion;
+      const seenVersion = localStorage.getItem(STORAGE_KEY);
+
+      // 初回アクセス時は保存だけして通知しない
+      if (!seenVersion) {
+        localStorage.setItem(STORAGE_KEY, currentVersion);
         return;
       }
 
-      if (initialVersionRef.current !== latestVersion) {
-        setHasUpdate(true);
+      // 前回見た版と違えば通知
+      if (seenVersion !== currentVersion) {
+        setMessageOpen(true);
       }
+
+      // 今回の版を保存
+      localStorage.setItem(STORAGE_KEY, currentVersion);
     };
 
     checkVersion();
-
-    const interval = setInterval(checkVersion, 5000);
-
-    const onFocus = () => {
-      checkVersion();
-    };
-
-    window.addEventListener("focus", onFocus);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
-    };
   }, []);
 
-  if (!hasUpdate) return null;
+  if (!messageOpen) return null;
 
   return (
     <div
@@ -76,13 +69,13 @@ export default function UpdateNotifier() {
       }}
     >
       <div style={{ fontWeight: 700, marginBottom: 8 }}>
-        新しい更新があります
+        アプリが更新されました
       </div>
       <div style={{ fontSize: 14, marginBottom: 12 }}>
-        最新版が公開されました。再読み込みすると反映されます。
+        新しい内容が反映されています。
       </div>
       <button
-        onClick={() => window.location.reload()}
+        onClick={() => setMessageOpen(false)}
         style={{
           border: "none",
           borderRadius: 8,
@@ -91,7 +84,7 @@ export default function UpdateNotifier() {
           fontWeight: 700,
         }}
       >
-        更新する
+        閉じる
       </button>
     </div>
   );
