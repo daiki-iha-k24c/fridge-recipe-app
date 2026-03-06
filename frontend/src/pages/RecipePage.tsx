@@ -2,7 +2,7 @@ import { useState } from "react";
 import RecipeDetail from "../components/RecipeDetail";
 import "../styles/card.css";
 import RecipeCard from "../components/RecipeCard";
-
+import "../styles/styles.css";
 
 
 type Candidate = {
@@ -27,8 +27,8 @@ export default function RecipePage() {
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [suggestError, setSuggestError] = useState<string | null>(null);
 
-const [loadingDetail, setLoadingDetail] = useState(false);
-const [detailError, setDetailError] = useState<string | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   // ✅ 冷蔵庫（追加式）
   const [ingredientInput, setIngredientInput] = useState("");
@@ -145,8 +145,11 @@ const [detailError, setDetailError] = useState<string | null>(null);
       {!selectedCandidate ? (
         <>
           {/* ✅ 冷蔵庫UI */}
-          <div className="toolbar">
+          <div className="input-section">
+            <div className="input-title">🥕 材料を入力</div>
+
             <input
+              className="ingredient-input"
               value={ingredientInput}
               onChange={(e) => setIngredientInput(e.target.value)}
               placeholder="食材を1つ入力（例：卵）"
@@ -154,10 +157,23 @@ const [detailError, setDetailError] = useState<string | null>(null);
                 if (e.key === "Enter") addIngredient();
               }}
             />
-            <button onClick={addIngredient}>追加</button>
-            <button onClick={clearFridge}>全クリア</button>
-            <button onClick={suggestRecipes} disabled={fridge.length === 0 || loadingSuggest}>
-              レシピ提案
+
+            <div className="row-buttons">
+              <button className="sub-button add-button" onClick={addIngredient}>
+                追加
+              </button>
+
+              <button className="sub-button clear-button" onClick={clearFridge}>
+                全クリア
+              </button>
+            </div>
+
+            <button
+              className="recipe-button"
+              onClick={suggestRecipes}
+              disabled={fridge.length === 0 || loadingSuggest}
+            >
+              {loadingSuggest ? "提案中..." : "🍳 レシピ提案"}
             </button>
           </div>
 
@@ -240,13 +256,13 @@ const [detailError, setDetailError] = useState<string | null>(null);
 
 
           {/* ✅ 候補一覧 */}
-{fridge.length > 0 && candidates.length > 0 && (
-  <div className="grid">
-    {candidates.map((c) => (
-      <RecipeCard key={c.id} candidate={c} onSelect={handleSelect} />
-    ))}
-  </div>
-)}
+          {fridge.length > 0 && candidates.length > 0 && (
+            <div className="grid">
+              {candidates.map((c) => (
+                <RecipeCard key={c.id} candidate={c} onSelect={handleSelect} />
+              ))}
+            </div>
+          )}
 
 
 
