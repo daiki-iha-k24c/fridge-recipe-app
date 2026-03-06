@@ -138,6 +138,9 @@ const [detailError, setDetailError] = useState<string | null>(null);
   return (
     <div className="page">
 
+      <header>
+        冷蔵庫アプリ
+      </header>
 
       {!selectedCandidate ? (
         <>
