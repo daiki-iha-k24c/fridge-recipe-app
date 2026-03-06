@@ -18,9 +18,11 @@ app.add_middleware(
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+
 class RecipeListRequest(BaseModel):
     ingredients: List[str]
     n: int = 4
+
 
 class RecipeCandidate(BaseModel):
     id: str
@@ -28,8 +30,10 @@ class RecipeCandidate(BaseModel):
     short: str
     required: List[str]
 
+
 class RecipeListResponse(BaseModel):
     candidates: List[RecipeCandidate]
+
 
 @app.post("/ai-recipes", response_model=RecipeListResponse)
 def ai_recipes(req: RecipeListRequest):
@@ -131,13 +135,13 @@ class RecipeDetailRequest(BaseModel):
     title: str
     required: List[str]
 
+
 class RecipeDetailResponse(BaseModel):
     title: str
     required: List[str]
     missing: List[str]
     steps: List[str]
     cookpad_search_url: str
-
 
 
 @app.post("/ai-recipe-detail", response_model=RecipeDetailResponse)
@@ -188,7 +192,6 @@ def ai_recipe_detail(req: RecipeDetailRequest):
     except Exception:
         steps = []
 
-
     return {
         "title": req.title,
         "required": sorted(list(required_set)),
@@ -196,5 +199,3 @@ def ai_recipe_detail(req: RecipeDetailRequest):
         "steps": steps,
         "cookpad_search_url": f"https://cookpad.com/search/{req.title}",
     }
-
-
