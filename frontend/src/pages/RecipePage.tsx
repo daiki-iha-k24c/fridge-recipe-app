@@ -168,30 +168,33 @@ export default function RecipePage() {
               </button>
             </div>
 
-            {fridge.length > 0 && (
-              <div className="ingredient-list">
-                {fridge.map((item, index) => (
-                  <div key={index} className="ingredient-chip">
-                    <span>{item}</span>
-                    <button
-                      className="chip-remove"
-                      onClick={() => removeIngredient(index)}
-                    >
-                      ×
-                    </button>
+            <div className="ingredient-state-card">
+              {fridge.length === 0 ? (
+                <>
+                  <div className="state-title">🥑まだ材料がありません🥑</div>
+                </>
+              ) : (
+                <>
+                  <div className="state-title">🥬入っている材料🥬</div>
+
+                  <div className="ingredient-list in-card">
+                    {fridge.map((item, index) => (
+                      <div key={index} className="ingredient-chip">
+                        <span>{item}</span>
+                        <button
+                          className="chip-remove"
+                          onClick={() => removeIngredient(index)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-
-             {fridge.length === 0 && !loadingSuggest && (
-            <div className="empty-state">
-              <div className="empty-icon">🥑</div>
-              <div className="empty-title">まだ食材がありません</div>
+                </>
+              )}
             </div>
-          )}
 
-          
+
 
             <button
               className="recipe-button"
@@ -216,7 +219,7 @@ export default function RecipePage() {
             </div>
           )}
 
-         
+
 
 
 
