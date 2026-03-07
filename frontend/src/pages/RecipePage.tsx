@@ -146,7 +146,7 @@ export default function RecipePage() {
         <>
           {/* ✅ 冷蔵庫UI */}
           <div className="input-section">
-            <div className="input-title">🥕 材料を入力</div>
+            <div className="input-title">🥕 食材を入力</div>
 
             <input
               className="ingredient-input"
@@ -187,7 +187,7 @@ export default function RecipePage() {
              {fridge.length === 0 && !loadingSuggest && (
             <div className="empty-state">
               <div className="empty-icon">🥑</div>
-              <div className="empty-title">まだ材料がありません</div>
+              <div className="empty-title">まだ食材がありません</div>
             </div>
           )}
 
@@ -198,7 +198,7 @@ export default function RecipePage() {
               onClick={suggestRecipes}
               disabled={fridge.length === 0 || loadingSuggest}
             >
-              {loadingSuggest ? "提案中..." : "🍳 レシピ提案"}
+              {loadingSuggest ? "提案中..." : "🍳 AIに料理を提案してもらう"}
             </button>
           </div>
 
