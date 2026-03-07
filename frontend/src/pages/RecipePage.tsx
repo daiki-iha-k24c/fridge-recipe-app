@@ -53,8 +53,8 @@ export default function RecipePage() {
     setSuggestError(null);
   }
 
-  function removeIngredient(name: string) {
-    setFridge(fridge.filter((x) => x !== name));
+  function removeIngredient(index: number) {
+    setFridge((prev) => prev.filter((_, i) => i !== index));
   }
 
   function clearFridge() {
@@ -138,9 +138,9 @@ export default function RecipePage() {
   return (
     <div className="page">
 
-      <header>
+      {/* <header>
         冷蔵庫アプリ🍳🍳🍳🍳
-      </header>
+      </header> */}
 
       {!selectedCandidate ? (
         <>
@@ -168,6 +168,31 @@ export default function RecipePage() {
               </button>
             </div>
 
+            {fridge.length > 0 && (
+              <div className="ingredient-list">
+                {fridge.map((item, index) => (
+                  <div key={index} className="ingredient-chip">
+                    <span>{item}</span>
+                    <button
+                      className="chip-remove"
+                      onClick={() => removeIngredient(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+             {fridge.length === 0 && !loadingSuggest && (
+            <div className="empty-state">
+              <div className="empty-icon">🥑</div>
+              <div className="empty-title">まだ材料がありません</div>
+            </div>
+          )}
+
+          
+
             <button
               className="recipe-button"
               onClick={suggestRecipes}
@@ -183,79 +208,6 @@ export default function RecipePage() {
             </div>
           )}
 
-
-          {/* ✅ チップ表示 */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-            {fridge.length === 0 ? (
-              <p></p>
-            ) : (
-              fridge.map((x) => (
-                <span key={x} className="pill" style={{ display: "inline-flex", gap: 8 }}>
-                  {x}
-                  <button
-                    onClick={() => removeIngredient(x)}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: "#999",
-                    }}
-                    aria-label={`${x} を削除`}
-                    title="削除"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))
-            )}
-          </div>
-
-          {/* ✅ 空状態（材料なし） */}
-          {fridge.length === 0 && !loadingSuggest && (
-            <div
-              className="card"
-              style={{
-                width: "100%",
-                padding: 28,
-                border: "1px dashed #ddd",
-                textAlign: "center",
-                marginBottom: 16,
-              }}
-            >
-              <div className="card-title" style={{ marginBottom: 8 }}>
-                まだ材料がありません 🧊
-              </div>
-              <div className="card-text" style={{ marginBottom: 16 }}>
-                上の入力欄から材料を追加して、「レシピ提案」を押してみてね。
-              </div>
-
-              <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-                <button
-                  onClick={() => {
-                    setIngredientInput("卵");
-                  }}
-                  style={{ padding: "10px 14px" }}
-                >
-                  例：卵
-                </button>
-                <button
-                  onClick={() => {
-                    setIngredientInput("キャベツ");
-                  }}
-                  style={{ padding: "10px 14px" }}
-                >
-                  例：キャベツ
-                </button>
-              </div>
-
-              <div style={{ marginTop: 12, fontSize: 12, color: "#777" }}>
-                ※ 追加は Enter キーでもできます
-              </div>
-            </div>
-          )}
-
-
-          {/* ✅ 候補一覧 */}
           {fridge.length > 0 && candidates.length > 0 && (
             <div className="grid">
               {candidates.map((c) => (
@@ -263,6 +215,8 @@ export default function RecipePage() {
               ))}
             </div>
           )}
+
+         
 
 
 
