@@ -5,6 +5,8 @@ type Recipe = {
   ingredients: string[];
   steps: string[];
   tips?: string[];
+  imageUrl?: string;
+  recipeUrl?: string;
 };
 
 export default function RecipeDetail({
@@ -21,8 +23,25 @@ export default function RecipeDetail({
       </a>
 
       <div className="card" style={{ width: "100%" }}>
+        {recipe.imageUrl ? (
+          <img
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            className="card-img"
+          />
+        ) : null}
+
         <div className="card-content">
           <div className="card-title">{recipe.title}</div>
+
+          {recipe.recipeUrl ? (
+            <div className="card-text">
+              <b>レシピURL:</b>{" "}
+              <a href={recipe.recipeUrl} target="_blank" rel="noreferrer">
+                レシピページを見る
+              </a>
+            </div>
+          ) : null}
 
           <div className="card-text">
             <b>材料</b>

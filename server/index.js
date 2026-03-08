@@ -1,204 +1,181 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import OpenAI from "openai";
 import crypto from "crypto";
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json());
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function normalizeIngredients(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((x) => String(x).trim())
+    .filter(Boolean)
+    .filter((v, i, self) => self.indexOf(v) === i);
+}
 
-/**
- * POST /api/recipes/suggest
- * body: { fridge: string[], count?: number, servings?: number, timeLimitMin?: number, dislikes?: string[] }
- * return: { candidates: Candidate[] }
- */
-app.post("/api/recipes/suggest", async (req, res) => {
-  try {
-    const {
-      fridge = [],
-      count = 4,
-      servings,
-      timeLimitMin,
-      dislikes = [],
-    } = req.body ?? {};
+function buildCookpadSearchResult(keyword) {
+  const encodedKeyword = encodeURIComponent(keyword);
 
-    if (!Array.isArray(fridge) || fridge.length === 0) {
-      return res.status(400).json({ error: "fridge must be a non-empty array" });
-    }
+  return {
+    id: crypto.randomUUID(),
+    title: `Cookpadで「${keyword}」を検索`,
+    imageUrl: "",
+    recipeUrl: `https://cookpad.com/search/${encodedKeyword}`,
+    siteName: "Cookpad",
+  };
+}
 
-    const schema = {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        candidates: {
-          type: "array",
-          minItems: 1,
-          maxItems: Math.min(8, Math.max(1, count)),
-          items: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              id: { type: "string" },
-              title: { type: "string" },
-              oneLine: { type: "string" },
-              timeMin: { type: "integer", minimum: 5, maximum: 120 },
-              difficulty: { type: "integer", minimum: 1, maximum: 5 },
-              mainIngredients: {
-                type: "array",
-                minItems: 2,
-                maxItems: 6,
-                items: { type: "string" },
-              },
-              seed: { type: "string" }
-            },
-            required: ["id", "title", "oneLine", "timeMin", "difficulty", "mainIngredients", "seed"],
-          }
-        }
-      },
-      required: ["candidates"]
-    };
+function buildRakutenSearchResult(keyword) {
+  const encodedKeyword = encodeURIComponent(keyword);
 
-    const input = [
-      {
-        role: "system",
-        content:
-          "You are a helpful cooking assistant. Output MUST be valid JSON that matches the given schema. No extra keys.",
-      },
-      {
-        role: "user",
-        content: [
-          "冷蔵庫の食材から、作りやすいレシピ候補を提案して。",
-          "",
-          `【冷蔵庫】${fridge.join(" / ")}`,
-          dislikes?.length ? `【避けたい】${dislikes.join(" / ")}` : "",
-          servings ? `【人数】${servings}人` : "",
-          timeLimitMin ? `【制約】${timeLimitMin}分以内` : "",
-          "",
-          "ルール:",
-          "- 候補は短く比較しやすく（タイトル、1行説明、時間、難易度、主な食材）",
-          "- 冷蔵庫にない食材は基本入れない（調味料はOK）",
-          "- seed は後で詳細生成に使うので、料理の要点が分かる短文にして（例: '鶏むね×味噌バター焼き、15分、フライパン')",
-          `- 候補数は ${Math.min(8, Math.max(1, count))} 件`,
-        ].filter(Boolean).join("\n"),
-      },
-    ];
+  return {
+    id: crypto.randomUUID(),
+    title: `楽天レシピで「${keyword}」を検索`,
+    imageUrl: "",
+    recipeUrl: `https://recipe.rakuten.co.jp/search/${encodedKeyword}/`,
+    siteName: "楽天レシピ",
+  };
+}
 
-    const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input,
-      text: {
-        format: {
-          type: "json_schema",
-          name: "RecipeSuggest",
-          schema,
-          strict: true,
-        },
-      },
-    });
+async function fetchRakutenCategories() {
+  const appId = process.env.RAKUTEN_APP_ID;
 
-
-    const text = resp.output_text;
-    const json = JSON.parse(text);
-
-    // 念のためidをサーバー側で確実にユニークにする（モデルが被らせることがある）
-    json.candidates = json.candidates.map((c) => ({
-      ...c,
-      id: crypto.randomUUID(),
-    }));
-
-    res.json(json);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "suggest failed" });
+  if (!appId) {
+    throw new Error("RAKUTEN_APP_ID is missing");
   }
-});
 
-/**
- * POST /api/recipes/detail
- * body: { seed: string, fridge?: string[] }
- * return: Recipe
- */
-app.post("/api/recipes/detail", async (req, res) => {
+  const url =
+    `https://openapi.rakuten.co.jp/recipems/api/Recipe/CategoryList/20170426` +
+    `?applicationId=${encodeURIComponent(appId)}&categoryType=small&format=json`;
+
+  const r = await fetch(url);
+
+  if (!r.ok) {
+    throw new Error(`Rakuten CategoryList failed: ${r.status}`);
+  }
+
+  const data = await r.json();
+  return Array.isArray(data?.result?.small) ? data.result.small : [];
+}
+
+async function fetchRakutenRanking(categoryId) {
+  const appId = process.env.RAKUTEN_APP_ID;
+
+  if (!appId) {
+    throw new Error("RAKUTEN_APP_ID is missing");
+  }
+
+  const url =
+    `https://openapi.rakuten.co.jp/recipems/api/Recipe/CategoryRanking/20170426` +
+    `?applicationId=${encodeURIComponent(appId)}` +
+    `&categoryId=${encodeURIComponent(categoryId)}` +
+    `&format=json`;
+
+  const r = await fetch(url);
+
+  if (!r.ok) {
+    throw new Error(`Rakuten CategoryRanking failed: ${r.status}`);
+  }
+
+  const data = await r.json();
+  return Array.isArray(data?.result) ? data.result : [];
+}
+
+function scoreCategory(name, ingredients) {
+  let score = 0;
+  const lower = String(name || "").toLowerCase();
+
+  for (const ing of ingredients) {
+    if (lower.includes(String(ing).toLowerCase())) score += 2;
+  }
+
+  return score;
+}
+
+app.post("/api/recipes/search", async (req, res) => {
   try {
-    const { seed, fridge = [] } = req.body ?? {};
-    if (!seed || typeof seed !== "string") {
-      return res.status(400).json({ error: "seed is required" });
+    const { ingredients = [] } = req.body ?? {};
+    console.log("SEARCH BODY:", req.body);
+
+    const normalizedIngredients = normalizeIngredients(ingredients);
+
+    if (normalizedIngredients.length === 0) {
+      return res.status(400).json({ error: "ingredients must be a non-empty array" });
     }
 
-    const schema = {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        title: { type: "string" },
-        ingredients: {
-          type: "array",
-          minItems: 3,
-          maxItems: 25,
-          items: { type: "string" },
-        },
-        steps: {
-          type: "array",
-          minItems: 3,
-          maxItems: 20,
-          items: { type: "string" },
-        },
-        tips: {
-          type: "array",
-          minItems: 0,
-          maxItems: 8,
-          items: { type: "string" },
-        },
-      },
-      required: ["title", "ingredients", "steps", "tips"],
-    };
+    const keyword = normalizedIngredients.join(" ");
+    const cookpadResult = buildCookpadSearchResult(keyword);
+    const rakutenSearchResult = buildRakutenSearchResult(keyword);
 
-    const input = [
-      {
-        role: "system",
-        content:
-          "You are a helpful cooking assistant. Output MUST be valid JSON that matches the given schema. No extra keys.",
-      },
-      {
-        role: "user",
-        content: [
-          "次のseedの料理を、家庭向けに失敗しにくい詳細レシピにして。",
-          "",
-          `【seed】${seed}`,
-          fridge?.length ? `【冷蔵庫】${fridge.join(" / ")}` : "",
-          "",
-          "ルール:",
-          "- 材料は「食材名 + 分量」を1行ずつ（例: '卵 2個', 'キャベツ 1/4玉', '醤油 小さじ2')",
-          "- 手順は番号にできる粒度で短く。火加減やタイミングが重要なら書く",
-          "- 冷蔵庫にない食材は基本追加しない（塩/胡椒/油など最低限の調味料はOK）",
-          "- tips には失敗しないコツ・代替案を入れてOK",
-        ].filter(Boolean).join("\n"),
-      },
-    ];
+    let rakutenResults = [];
 
-    const resp = await client.responses.create({
-      model: "gpt-4.1-mini",
-      input,
-      text: {
-        format: {
-          type: "json_schema",
-          name: "RecipeSuggest",
-          schema,
-          strict: true,
-        },
-      },
+    try {
+      console.log("RAKUTEN_APP_ID exists:", Boolean(process.env.RAKUTEN_APP_ID));
+
+      const categories = await fetchRakutenCategories();
+      console.log("Rakuten categories:", categories.length);
+
+      const scoredCategories = categories
+        .map((c) => ({
+          id: c.categoryId,
+          name: c.categoryName,
+          score: scoreCategory(c.categoryName, normalizedIngredients),
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      let topCategories = scoredCategories.filter((c) => c.score > 0).slice(0, 3);
+
+      if (topCategories.length === 0) {
+        const fallbackNames = ["野菜", "肉", "魚", "汁物", "ご飯もの", "麺", "鍋"];
+        topCategories = scoredCategories
+          .filter((c) => fallbackNames.some((name) => c.name.includes(name)))
+          .slice(0, 3);
+      }
+
+      if (topCategories.length === 0) {
+        topCategories = scoredCategories.slice(0, 3);
+      }
+
+      console.log("Top categories:", topCategories);
+
+      const lists = await Promise.all(
+        topCategories.map((c) => fetchRakutenRanking(c.id))
+      );
+
+      rakutenResults = lists
+        .flat()
+        .map((r) => ({
+          id: crypto.randomUUID(),
+          title: r.recipeTitle || "楽天レシピ",
+          imageUrl: r.foodImageUrl || r.mediumImageUrl || r.smallImageUrl || "",
+          recipeUrl: r.recipeUrl || "",
+          siteName: "楽天レシピ",
+        }))
+        .filter((r) => r.recipeUrl)
+        .slice(0, 8);
+
+      console.log("Rakuten results:", rakutenResults.length);
+    } catch (rakutenError) {
+      console.error("Rakuten error:", rakutenError);
+      rakutenResults = [];
+    }
+
+    return res.json({
+      results: [cookpadResult, rakutenSearchResult, ...rakutenResults],
     });
-
-
-    const json = JSON.parse(resp.output_text);
-    res.json(json);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "detail failed" });
+  } catch (e) {
+    console.error("SEARCH API ERROR:", e);
+    return res.status(500).json({
+      error: "search failed",
+      detail: e instanceof Error ? e.message : String(e),
+    });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`API server listening on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`API server running on http://localhost:${PORT}`);
+  console.log("RAKUTEN_APP_ID exists:", Boolean(process.env.RAKUTEN_APP_ID));
+});

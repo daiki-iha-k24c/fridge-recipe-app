@@ -1,46 +1,38 @@
 import "../styles/card.css";
 
-type Candidate = {
+type SearchResult = {
   id: string;
   title: string;
-  oneLine?: string;
-  timeMin?: number;
-  difficulty?: number;
-  mainIngredients?: string[];
-  seed?: string;
+  imageUrl?: string;
+  recipeUrl: string;
+  siteName?: string;
 };
 
 export default function RecipeCard({
-  candidate,
-  onSelect,
+  result,
 }: {
-  candidate: Candidate;
-  onSelect: (c: Candidate) => void;
+  result: SearchResult;
 }) {
-  const { title, oneLine, timeMin, difficulty, mainIngredients } = candidate;
-
   return (
     <div className="card">
+      {result.imageUrl ? (
+        <img src={result.imageUrl} alt={result.title} className="card-img" />
+      ) : null}
+
       <div className="card-content">
-        <div className="card-title">{title}</div>
-        {oneLine && <div className="card-text">{oneLine}</div>}
+        <div className="card-title">{result.title}</div>
 
-        <div className="card-meta">
-          {typeof timeMin === "number" && <span className="pill">⏱ {timeMin}分</span>}
-          {typeof difficulty === "number" && (
-            <span className="pill">⭐ 難易度 {difficulty}/5</span>
-          )}
-        </div>
-
-        {Array.isArray(mainIngredients) && mainIngredients.length > 0 && (
+        {result.siteName ? (
           <div className="card-text">
-            <b>主な食材:</b> {mainIngredients.join(" / ")}
+            <b>サイト:</b> {result.siteName}
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="card-actions">
-        <button onClick={() => onSelect(candidate)}>このレシピを見る</button>
+        <a href={result.recipeUrl} target="_blank" rel="noreferrer">
+          サイトで見る
+        </a>
       </div>
     </div>
   );
