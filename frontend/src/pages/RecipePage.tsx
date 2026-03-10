@@ -71,11 +71,18 @@ export default function RecipePage() {
         }),
       });
 
+      console.log("status", r.status);
+      console.log("content-type", r.headers.get("content-type"));
+
+      const text = await r.text();
+      console.log("raw body", text);
+
       if (!r.ok) {
         throw new Error(await r.text());
       }
 
       const data = await r.json();
+      console.log("parsed data", data);
       setResults(Array.isArray(data.results) ? data.results : []);
     } catch (e: any) {
       console.error(e);
