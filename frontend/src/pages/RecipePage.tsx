@@ -9,6 +9,8 @@ type SearchResult = {
   imageUrl?: string;
   recipeUrl: string;
   siteName?: string;
+  matchedIngredients?: string[];
+  score?: number;
 };
 
 export default function RecipePage() {
@@ -21,6 +23,12 @@ export default function RecipePage() {
   function addIngredient() {
     const v = ingredientInput.trim();
     if (!v) return;
+
+    if (fridge.length >= 3) {
+      setSearchError("食材を追加できるのは３つまでです");
+      setIngredientInput("");
+      return;
+    }
 
     if (fridge.includes(v)) {
       setIngredientInput("");
@@ -48,6 +56,8 @@ export default function RecipePage() {
       alert("食材を追加してね");
       return;
     }
+
+    console.log("fridge before send:", fridge);
 
     setLoadingSearch(true);
     setSearchError(null);
@@ -84,14 +94,18 @@ export default function RecipePage() {
           className="ingredient-input"
           value={ingredientInput}
           onChange={(e) => setIngredientInput(e.target.value)}
-          placeholder="食材を1つ入力（例：キャベツ）"
+          placeholder="食材を1つ入力（最大3つまで）"
           onKeyDown={(e) => {
             if (e.key === "Enter") addIngredient();
           }}
         />
 
         <div className="row-buttons">
-          <button className="sub-button add-button" onClick={addIngredient}>
+          <button
+            className="sub-button add-button"
+            onClick={addIngredient}
+            disabled={fridge.length >= 3}
+          >
             追加
           </button>
 
@@ -144,8 +158,7 @@ export default function RecipePage() {
       {fridge.length > 0 && results.length > 0 && (
         <div className="grid">
           {results.map((result) => (
-            <RecipeCard key={result.id} result={result} />
-          ))}
+            <RecipeCard key={result.id} result={result} fridge={fridge} />))}
         </div>
       )}
 
