@@ -52,45 +52,47 @@ export default function RecipePage() {
   }
 
   async function searchRecipes() {
-    if (fridge.length === 0) {
-      alert("食材を追加してね");
-      return;
-    }
-
-    console.log("fridge before send:", fridge);
-
-    setLoadingSearch(true);
-    setSearchError(null);
-
-    try {
-      const r = await fetch("/api/recipes/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ingredients: fridge,
-        }),
-      });
-
-      console.log("status", r.status);
-      console.log("content-type", r.headers.get("content-type"));
-
-      const text = await r.text();
-      console.log("raw body", text);
-
-      if (!r.ok) {
-        throw new Error(await r.text());
-      }
-
-      const data = await r.json();
-      console.log("parsed data", data);
-      setResults(Array.isArray(data.results) ? data.results : []);
-    } catch (e: any) {
-      console.error(e);
-      setSearchError(e?.message ?? "検索に失敗しました");
-    } finally {
-      setLoadingSearch(false);
-    }
+  if (fridge.length === 0) {
+    alert("食材を追加してね");
+    return;
   }
+
+  console.log("fridge before send:", fridge);
+
+  setLoadingSearch(true);
+  setSearchError(null);
+
+  try {
+    const r = await fetch("/api/recipes/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ingredients: fridge,
+      }),
+    });
+
+    console.log("status", r.status);
+    console.log("content-type", r.headers.get("content-type"));
+
+    const text = await r.text();
+    console.log("raw body", text);
+
+    if (!r.ok) {
+      throw new Error(text || `HTTP ${r.status}`);
+    }
+
+    const data = JSON.parse(text);
+    console.log("parsed data", data);
+
+    setResults(Array.isArray(data.results) ? data.results : []);
+  } catch (e: any) {
+    console.error(e);
+    setSearchError(e?.message ?? "検索に失敗しました");
+    setResults([]);
+  } finally {
+    setLoadingSearch(false);
+  }
+}
 
   return (
     <div className="page">
@@ -109,6 +111,7 @@ export default function RecipePage() {
 
         <div className="row-buttons">
           <button
+          type="button"
             className="sub-button add-button"
             onClick={addIngredient}
             disabled={fridge.length >= 3}
@@ -116,7 +119,7 @@ export default function RecipePage() {
             追加
           </button>
 
-          <button className="sub-button clear-button" onClick={clearFridge}>
+          <button className="sub-button clear-button" onClick={clearFridge} type="button">
             全クリア
           </button>
         </div>
@@ -147,6 +150,7 @@ export default function RecipePage() {
 
         <button
           className="recipe-button"
+          type="button"
           onClick={searchRecipes}
           disabled={fridge.length === 0 || loadingSearch}
         >
