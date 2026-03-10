@@ -10,6 +10,44 @@ type SearchResult = {
   score?: number;
 };
 
+function katakanaToHiragana(str: string) {
+  return str.replace(/[ァ-ヶ]/g, (ch) =>
+    String.fromCharCode(ch.charCodeAt(0) - 0x60)
+  );
+}
+
+function normalizeText(str: string) {
+  return katakanaToHiragana(String(str))
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
+}
+
+const INGREDIENT_ALIASES: Record<string, string[]> = {
+  たまご: ["たまご", "卵", "玉子", "egg"],
+  にら: ["にら", "ニラ", "韮"],
+  ぎゅうにく: ["ぎゅうにく", "牛肉", "ビーフ"],
+  ぶたにく: ["ぶたにく", "豚肉", "ポーク"],
+  とりにく: ["とりにく", "鶏肉", "チキン"],
+  たまねぎ: ["たまねぎ", "玉ねぎ", "玉葱", "タマネギ"],
+  ねぎ: ["ねぎ", "ネギ", "葱", "長ねぎ", "長ネギ"],
+  じゃがいも: ["じゃがいも", "ジャガイモ", "馬鈴薯"],
+  にんじん: ["にんじん", "ニンジン", "人参"],
+  きゃべつ: ["きゃべつ", "キャベツ"],
+};
+
+function canonicalizeIngredient(input: string) {
+  const normalized = normalizeText(input);
+
+  for (const [key, aliases] of Object.entries(INGREDIENT_ALIASES)) {
+    if (aliases.some((alias) => normalizeText(alias) === normalized)) {
+      return key;
+    }
+  }
+
+  return normalized;
+}
+
 export default function RecipeCard({
   result,
   fridge,
@@ -17,11 +55,13 @@ export default function RecipeCard({
   result: SearchResult;
   fridge: string[];
 }) {
-  const matchedSet = new Set(result.matchedIngredients ?? []);
+  const matchedSet = new Set(
+    (result.matchedIngredients ?? []).map(canonicalizeIngredient)
+  );
 
   const ingredientStates = fridge.map((item) => ({
     name: item,
-    hit: matchedSet.has(item),
+    hit: matchedSet.has(canonicalizeIngredient(item)),
   }));
 
   return (
