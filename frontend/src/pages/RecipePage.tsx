@@ -20,12 +20,15 @@ export default function RecipePage() {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
+  const [scene, setScene] = useState("指定なし");
+  const [easyMode, setEasyMode] = useState(false);
+
   function addIngredient() {
     const v = ingredientInput.trim();
     if (!v) return;
 
     if (fridge.length >= 3) {
-      setSearchError("食材を追加できるのは３つまでです");
+      setSearchError("食材を追加できるのは3つまでです");
       setIngredientInput("");
       return;
     }
@@ -49,50 +52,56 @@ export default function RecipePage() {
     setIngredientInput("");
     setResults([]);
     setSearchError(null);
+    setScene("指定なし");
+    setEasyMode(false);
   }
 
   async function searchRecipes() {
-  if (fridge.length === 0) {
-    alert("食材を追加してね");
-    return;
-  }
-
-  console.log("fridge before send:", fridge);
-
-  setLoadingSearch(true);
-  setSearchError(null);
-
-  try {
-    const r = await fetch("/api/recipes/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ingredients: fridge,
-      }),
-    });
-
-    console.log("status", r.status);
-    console.log("content-type", r.headers.get("content-type"));
-
-    const text = await r.text();
-    console.log("raw body", text);
-
-    if (!r.ok) {
-      throw new Error(text || `HTTP ${r.status}`);
+    if (fridge.length === 0) {
+      alert("食材を追加してね");
+      return;
     }
 
-    const data = JSON.parse(text);
-    console.log("parsed data", data);
+    console.log("fridge before send:", fridge);
+    console.log("scene:", scene);
+    console.log("easyMode:", easyMode);
 
-    setResults(Array.isArray(data.results) ? data.results : []);
-  } catch (e: any) {
-    console.error(e);
-    setSearchError(e?.message ?? "検索に失敗しました");
-    setResults([]);
-  } finally {
-    setLoadingSearch(false);
+    setLoadingSearch(true);
+    setSearchError(null);
+
+    try {
+      const r = await fetch("/api/recipes/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ingredients: fridge,
+          scene,
+          easyMode,
+        }),
+      });
+
+      console.log("status", r.status);
+      console.log("content-type", r.headers.get("content-type"));
+
+      const text = await r.text();
+      console.log("raw body", text);
+
+      if (!r.ok) {
+        throw new Error(text || `HTTP ${r.status}`);
+      }
+
+      const data = JSON.parse(text);
+      console.log("parsed data", data);
+
+      setResults(Array.isArray(data.results) ? data.results : []);
+    } catch (e: any) {
+      console.error(e);
+      setSearchError(e?.message ?? "検索に失敗しました");
+      setResults([]);
+    } finally {
+      setLoadingSearch(false);
+    }
   }
-}
 
   return (
     <div className="page">
@@ -111,7 +120,7 @@ export default function RecipePage() {
 
         <div className="row-buttons">
           <button
-          type="button"
+            type="button"
             className="sub-button add-button"
             onClick={addIngredient}
             disabled={fridge.length >= 3}
@@ -119,7 +128,11 @@ export default function RecipePage() {
             追加
           </button>
 
-          <button className="sub-button clear-button" onClick={clearFridge} type="button">
+          <button
+            type="button"
+            className="sub-button clear-button"
+            onClick={clearFridge}
+          >
             全クリア
           </button>
         </div>
@@ -136,6 +149,7 @@ export default function RecipePage() {
                   <div key={index} className="ingredient-chip">
                     <span>{item}</span>
                     <button
+                      type="button"
                       className="chip-remove"
                       onClick={() => removeIngredient(index)}
                     >
@@ -148,13 +162,47 @@ export default function RecipePage() {
           )}
         </div>
 
+        {/* <div className="search-options-card">
+          <div className="search-options-title">🍽️ 検索条件</div>
+
+          <div className="option-block">
+            <label className="option-label" htmlFor="scene-select">
+              シーンを選ぶ
+            </label>
+            <select
+              id="scene-select"
+              className="scene-select"
+              value={scene}
+              onChange={(e) => setScene(e.target.value)}
+            >
+              <option value="指定なし">指定なし</option>
+              <option value="朝ごはん">朝ごはん</option>
+              <option value="昼ごはん">昼ごはん</option>
+              <option value="夜ごはん">夜ごはん</option>
+              <option value="お弁当">お弁当</option>
+              <option value="おかず">おかず</option>
+              <option value="おつまみ">おつまみ</option>
+              <option value="デザート">デザート</option>
+            </select>
+          </div>
+
+          <label className="easy-toggle">
+            <input
+              type="checkbox"
+              checked={easyMode}
+              onChange={(e) => setEasyMode(e.target.checked)}
+            />
+            <span>かんたん優先</span>
+          </label>
+        </div> */}
+
         <button
-          className="recipe-button"
           type="button"
+          className="recipe-button"
           onClick={searchRecipes}
           disabled={fridge.length === 0 || loadingSearch}
         >
-          {loadingSearch ? "検索中..." : "🔎 この食材で料理を探す"}
+          {loadingSearch ? "検索中..." : "🔎 この条件で料理を探す"}
         </button>
       </div>
 
@@ -166,10 +214,19 @@ export default function RecipePage() {
         </div>
       )}
 
+      {!loadingSearch && fridge.length > 0 && results.length === 0 && !searchError && (
+        <div className="card" style={{ width: "100%", padding: 16, marginBottom: 16 }}>
+          <div className="card-text">
+            条件に合う動画が見つかりませんでした。
+          </div>
+        </div>
+      )}
+
       {fridge.length > 0 && results.length > 0 && (
         <div className="grid">
           {results.map((result) => (
-            <RecipeCard key={result.id} result={result} fridge={fridge} />))}
+            <RecipeCard key={result.id} result={result} fridge={fridge} />
+          ))}
         </div>
       )}
 
@@ -198,7 +255,7 @@ export default function RecipePage() {
               検索中…
             </div>
             <div className="card-text">
-              余っている食材を使えそうな料理を探しています 🧊
+              条件に合いそうな料理動画を探しています 🍳
             </div>
           </div>
         </div>

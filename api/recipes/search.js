@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   const INGREDIENT_ALIASES = {
-    たまご: ["たまご", "卵", "玉子", "玉子焼き", "卵焼き", "egg"],
+    たまご: ["たまご", "卵", "玉子", "egg"],
     にら: ["にら", "ニラ", "韮"],
     ぎゅうにく: ["ぎゅうにく", "牛肉", "ビーフ"],
     ぶたにく: ["ぶたにく", "豚肉", "ポーク"],
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       .slice(0, 3);
   }
 
-  function scoreVideo(video, ingredients) {
+  function scoreVideo(video, ingredients, scene, easyMode) {
     const title = normalizeText(video.snippet?.title ?? "");
     const description = normalizeText(video.snippet?.description ?? "");
 
@@ -96,16 +96,47 @@ export default async function handler(req, res) {
       }
     });
 
+    if (scene && scene !== "指定なし") {
+      const normalizedScene = normalizeText(scene);
+      if (title.includes(normalizedScene)) {
+        score += 2;
+      } else if (description.includes(normalizedScene)) {
+        score += 1;
+      }
+    }
+
+    if (easyMode) {
+      const easyWords = ["簡単", "かんたん", "時短", "すぐできる", "10分", "15分"];
+      for (const word of easyWords) {
+        const normalizedWord = normalizeText(word);
+        if (title.includes(normalizedWord)) {
+          score += 2;
+          break;
+        }
+        if (description.includes(normalizedWord)) {
+          score += 1;
+          break;
+        }
+      }
+    }
+
     return { score, matched };
   }
 
   async function searchYoutube(keyword) {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(
-      keyword + " レシピ"
+      keyword
     )}&key=${YOUTUBE_API_KEY}`;
 
     const r = await fetch(url);
     const data = await r.json();
+
+    if (!r.ok || data.error) {
+      throw new Error(
+        `YouTube search failed: status=${r.status} body=${JSON.stringify(data)}`
+      );
+    }
+
     return (data.items ?? []).map((v) => v.id?.videoId).filter(Boolean);
   }
 
@@ -118,11 +149,24 @@ export default async function handler(req, res) {
 
     const r = await fetch(url);
     const data = await r.json();
+
+    if (!r.ok || data.error) {
+      throw new Error(
+        `YouTube details failed: status=${r.status} body=${JSON.stringify(data)}`
+      );
+    }
+
     return data.items ?? [];
   }
 
   try {
+    if (!YOUTUBE_API_KEY) {
+      return res.status(500).json({ error: "YOUTUBE_API_KEY is missing" });
+    }
+
     const rawIngredients = req.body?.ingredients;
+    const scene = req.body?.scene ?? "指定なし";
+    const easyMode = Boolean(req.body?.easyMode);
 
     if (!Array.isArray(rawIngredients) || rawIngredients.length === 0) {
       return res
@@ -146,24 +190,29 @@ export default async function handler(req, res) {
       combos.push([ingredients[1], ingredients[2]]);
     }
 
-    const keywordVariants = ["レシピ", "料理", "作り方"];
+    const querySuffixes = ["レシピ", "料理", "作り方"];
+    const sceneWords = scene && scene !== "指定なし" ? [scene] : [];
+    const easyWords = easyMode ? ["簡単"] : [];
+
     const videoMap = new Map();
 
     for (const combo of combos) {
-      for (const variant of keywordVariants) {
-        const aliasExpanded = combo
-          .map((ing) => {
-            const aliases = INGREDIENT_ALIASES[ing];
-            return aliases ? aliases[0] : ing;
-          })
-          .join(" ");
+      const baseIngredients = combo
+        .map((ing) => {
+          const aliases = INGREDIENT_ALIASES[ing];
+          return aliases ? aliases[0] : ing;
+        })
+        .join(" ");
 
-        const query = `${aliasExpanded} ${variant}`;
-        const videoIds = await searchYoutube(query);
+      for (const suffix of querySuffixes) {
+        const keywordParts = [baseIngredients, ...sceneWords, ...easyWords, suffix];
+        const keyword = keywordParts.join(" ").trim();
+
+        const videoIds = await searchYoutube(keyword);
         const details = await getVideoDetails(videoIds);
 
         details.forEach((video) => {
-          const { score, matched } = scoreVideo(video, ingredients);
+          const { score, matched } = scoreVideo(video, ingredients, scene, easyMode);
 
           if (score === 0) return;
 
@@ -187,10 +236,7 @@ export default async function handler(req, res) {
             const existing = videoMap.get(id);
             existing.score += score;
             existing.matchedIngredients = [
-              ...new Set([
-                ...(existing.matchedIngredients ?? []),
-                ...matched,
-              ]),
+              ...new Set([...(existing.matchedIngredients ?? []), ...matched]),
             ];
           }
         });
@@ -199,9 +245,13 @@ export default async function handler(req, res) {
 
     const results = Array.from(videoMap.values()).sort((a, b) => b.score - a.score);
 
-    return res.status(200).json({ results });
+    return res.status(200).json({
+      results,
+    });
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: "search failed" });
+    return res.status(500).json({
+      error: e instanceof Error ? e.message : "search failed",
+    });
   }
 }

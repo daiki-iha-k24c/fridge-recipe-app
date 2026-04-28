@@ -172,3 +172,54 @@
 .chip-remove:hover {
   color: #c15b52;
 }
+
+.search-options-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.search-options-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.option-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.option-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.scene-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.easy-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.easy-toggle input {
+  width: 18px;
+  height: 18px;
+}
